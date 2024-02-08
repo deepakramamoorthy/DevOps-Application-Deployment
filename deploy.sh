@@ -1,6 +1,7 @@
 #!/bin/bash
-
-if [  "dev" -eq "dev" ]
+branchName = sh(label: 'getBranchName', returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+println branchName
+if [  "$branchName" -eq "dev" ]
 then
         echo "push to dev repo"
        

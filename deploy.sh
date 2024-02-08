@@ -1,6 +1,6 @@
 #!/bin/bash
-
-if [ ${env.BRANCH_NAME} -eq "dev" ]
+echo "${env.GIT_BRANCH}"
+if [ "${env.GIT_BRANCH}" -eq "dev" ]
 then
         echo "push to dev repo"
        

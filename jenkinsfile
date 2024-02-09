@@ -1,0 +1,76 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                // Get some code from a GitHub repository
+                 git branch: 'dev', url: "https://github.com/deepakramamoorthy/DevOps-Application-Deployment.git"
+
+            }
+
+            
+        }
+        
+        stage('dockerbuild') {
+            steps {
+                
+                sh 'chmod +x build.sh'
+                sh './build.sh'
+
+            }
+
+            
+        }
+        stage('dockerdeploy') {
+                   steps {
+            script {
+               branchName = sh(label: 'getBranchName', returnStdout: true, script: 'git rev-parse --abbrev-ref HEAD').trim()
+               echo branchName
+               
+               if (branchName == "dev") {
+                    echo "push to dev repo"
+      sh''' 
+       docker login -u deepakramamoorthy -p Dee9578461426@@@ 
+       docker tag newimage:latest deepakramamoorthy/reactapplicationdev:3.0
+       docker push deepakramamoorthy/reactapplicationdev:3.0
+       '''
+        } else {
+             echo "push to prod repo"
+   sh''''     
+	docker tag newimage:latest deepakramamoorthy/reactapplicationdev:3.0
+	docker push deepakramamoorthy/reactapplicationdev:3.0
+	'''
+        }
+            }  
+        
+        }
+
+            
+        }
+        
+        stage('deployToEKS') {
+                       steps {
+                withAWS(credentials: 'AWSCredentials') {
+                  script {
+                      echo "in"
+             sh '''
+             aws eks --region us-east-2 update-kubeconfig --name Test-Cluster
+             curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.23.15/2023-01-11/bin/linux/amd64/kubectl
+             chmod +x ./kubectl
+             mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+             kubectl version --short --client
+             kubectl get nodes
+             kubectl create ns mynamespace
+             kubectl create -f deploy.yaml
+             kubectl create -f service.yaml
+             
+             '''
+                }
+                }
+        }
+
+            
+        }
+    }
+}
